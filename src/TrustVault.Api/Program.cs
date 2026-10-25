@@ -308,8 +308,20 @@ app.MapPost("/api/auth/register",
      IPasswordHasher<UserAccount> hasher,
      HttpContext context) =>
 {
-    if (!app.Environment.IsDevelopment())
-        return Results.NotFound();
+    var isDevelopment = app.Environment.IsDevelopment();
+    using var transaction = isDevelopment
+        ? null
+        : db.Database.BeginTransaction();
+
+    if (!isDevelopment && db.Users.Any())
+    {
+        return Results.Conflict(new
+        {
+            message =
+                "Account creation is closed because this workspace already " +
+                "has an owner. Sign in with an existing account."
+        });
+    }
 
     var email = request.Email?.Trim().ToLowerInvariant() ?? "";
     var password = request.Password ?? "";
@@ -377,15 +389,18 @@ app.MapPost("/api/auth/register",
     db.AuditEvents.Add(new AuditEvent
     {
         ActorId = user.Id,
-        Action = "Register",
+        Action = isDevelopment ? "Register" : "InitialOwnerRegistered",
         Outcome = "Allowed",
         RequestId = context.TraceIdentifier,
-        Details = "Local account registered"
+        Details = isDevelopment
+            ? "Local account registered"
+            : "First production owner registered"
     });
 
     try
     {
         db.SaveChanges();
+        transaction?.Commit();
     }
     catch (DbUpdateException)
     {

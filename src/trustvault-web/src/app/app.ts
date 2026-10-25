@@ -816,9 +816,16 @@ export class App implements OnDestroy {
         } else if (error.status === 401) {
           this.loginError = 'Incorrect email or password.';
         } else if (error.status === 409) {
+          this.loginError = error.error?.message ??
+            'Account setup is already complete. Please sign in.';
+
+          if (this.loginError.includes('already exists') ||
+              this.loginError.includes('Account creation is closed')) {
+            this.isRegisterMode = false;
+          }
+        } else if (error.status === 404 && this.isRegisterMode) {
           this.loginError =
-            'This email already has an account. Please sign in.';
-          this.isRegisterMode = false;
+            'Account creation is unavailable on this deployment. Please try again later.';
         } else if (error.status === 400) {
           this.loginError = error.error?.message ??
             'Please check your email and password.';
