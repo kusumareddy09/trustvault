@@ -38,16 +38,8 @@ var configuredKey = builder.Configuration["Jwt:Key"];
 
 if (string.IsNullOrWhiteSpace(configuredKey))
 {
-    if (builder.Environment.IsDevelopment())
-    {
-        configuredKey =
-            "TrustVault-LOCAL-ONLY-key-not-for-production-2026";
-    }
-    else
-    {
-        throw new InvalidOperationException(
-            "Configure a production JWT signing key using Jwt__Key.");
-    }
+    throw new InvalidOperationException(
+        "Configure a JWT signing key using Jwt__Key or .NET User Secrets.");
 }
 
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "TrustVault";
@@ -57,14 +49,32 @@ var audience = builder.Configuration["Jwt:Audience"]
 var signingKey = new SymmetricSecurityKey(
     Encoding.UTF8.GetBytes(configuredKey));
 
+// JWT token lifetime: configurable, default 8 hours (480 minutes).
+// Set Jwt__TokenLifetimeMinutes in configuration to override it.
+var tokenLifetimeMinutes =
+    int.TryParse(builder.Configuration["Jwt:TokenLifetimeMinutes"], out var configuredTokenLifetimeMinutes)
+    && configuredTokenLifetimeMinutes > 0
+        ? configuredTokenLifetimeMinutes
+        : 480;
+
 // CORS
 builder.Services.AddCors(options =>
 {
+    var configuredOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>();
+
+    var allowedOrigins = configuredOrigins is { Length: > 0 }
+        ? configuredOrigins
+        : new[]
+        {
+            "http://localhost:4200",
+            "http://localhost:4201"
+        };
+
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:4200",
-                "http://localhost:4201")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -206,11 +216,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
-
-// Serve the Angular frontend from wwwroot.
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -239,11 +244,8 @@ app.MapPost(
         IPasswordHasher<UserAccount> hasher,
         HttpContext context) =>
     {
-        if (!app.Environment.IsDevelopment())
-        {
-            return Results.NotFound();
-        }
-
+        
+    
         var email = request.Email?
             .Trim()
             .ToLowerInvariant() ?? "";
@@ -334,7 +336,7 @@ app.MapPost(
             });
         }
 
-        var expiresAt = DateTime.UtcNow.AddMinutes(30);
+        var expiresAt = DateTime.UtcNow.AddMinutes(tokenLifetimeMinutes);
 
         var claims = new[]
         {
@@ -442,7 +444,7 @@ app.MapPost(
             return Results.Unauthorized();
         }
 
-        var expiresAt = DateTime.UtcNow.AddMinutes(30);
+        var expiresAt = DateTime.UtcNow.AddMinutes(tokenLifetimeMinutes);
 
         var claims = new[]
         {
@@ -1480,13 +1482,6 @@ app.MapDelete(
         return Results.Ok(new { message = "Document permanently deleted.", fileCleanupCompleted = true });
     })
     .RequireAuthorization();
-
-// ============================================================
-// ANGULAR SPA FALLBACK
-// ============================================================
-// Client-side Angular routes should return index.html when no file or API
-// endpoint matches the requested path.
-app.MapFallbackToFile("index.html");
 
 // ============================================================
 // START API
