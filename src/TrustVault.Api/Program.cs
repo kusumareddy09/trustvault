@@ -196,6 +196,82 @@ using (var scope = app.Services.CreateScope())
 
         db.SaveChanges();
     }
+    else
+    {
+        var email = builder.Configuration["Bootstrap:OwnerEmail"]
+            ?.Trim()
+            .ToLowerInvariant();
+        var password = builder.Configuration["Bootstrap:OwnerPassword"];
+
+        if (string.IsNullOrWhiteSpace(email) &&
+            string.IsNullOrWhiteSpace(password))
+        {
+            app.Logger.LogWarning(
+                "Initial owner provisioning was skipped because " +
+                "bootstrap credentials are not configured.");
+        }
+        else if (string.IsNullOrWhiteSpace(email) ||
+                 string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException(
+                "Set both Bootstrap__OwnerEmail and " +
+                "Bootstrap__OwnerPassword to provision the initial owner.");
+        }
+        else
+        {
+            if (email.Length > 254 || password.Length < 12 ||
+                password.Length > 128)
+            {
+                throw new InvalidOperationException(
+                    "The initial owner email or password does not meet " +
+                    "the required length constraints.");
+            }
+
+            try
+            {
+                var parsedEmail = new MailAddress(email);
+
+                if (!string.Equals(
+                        parsedEmail.Address,
+                        email,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        "Bootstrap__OwnerEmail must be a valid email address.");
+                }
+            }
+            catch (FormatException exception)
+            {
+                throw new InvalidOperationException(
+                    "Bootstrap__OwnerEmail must be a valid email address.",
+                    exception);
+            }
+
+            if (!db.Users.Any(u => u.Email == email))
+            {
+                var user = new UserAccount
+                {
+                    Email = email,
+                    Role = "Owner"
+                };
+
+                user.PasswordHash = scope.ServiceProvider
+                    .GetRequiredService<IPasswordHasher<UserAccount>>()
+                    .HashPassword(user, password);
+
+                db.Users.Add(user);
+                db.AuditEvents.Add(new AuditEvent
+                {
+                    ActorId = user.Id,
+                    Action = "InitialOwnerProvisioned",
+                    Outcome = "Allowed",
+                    Details =
+                        "Initial owner provisioned from deployment configuration"
+                });
+                db.SaveChanges();
+            }
+        }
+    }
 }
 
 if (app.Environment.IsDevelopment())
