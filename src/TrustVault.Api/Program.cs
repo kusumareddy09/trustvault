@@ -206,6 +206,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
+
+// Serve the Angular frontend from wwwroot.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -234,6 +239,11 @@ app.MapPost(
         IPasswordHasher<UserAccount> hasher,
         HttpContext context) =>
     {
+        if (!app.Environment.IsDevelopment())
+        {
+            return Results.NotFound();
+        }
+
         var email = request.Email?
             .Trim()
             .ToLowerInvariant() ?? "";
@@ -250,11 +260,11 @@ app.MapPost(
             });
         }
 
-        if (password.Length < 12 || password.Length > 128)
+        if (password.Length < 8 || password.Length > 128)
         {
             return Results.BadRequest(new
             {
-                message = "Password must contain 12 to 128 characters."
+                message = "Password must contain 8 to 128 characters."
             });
         }
 
@@ -290,7 +300,6 @@ app.MapPost(
             });
         }
 
-        // Every newly registered account receives the Owner role.
         var user = new UserAccount
         {
             Email = email,
@@ -309,7 +318,7 @@ app.MapPost(
             Action = "Register",
             Outcome = "Allowed",
             RequestId = context.TraceIdentifier,
-            Details = "New Owner account registered"
+            Details = "Local account registered"
         });
 
         try
@@ -1471,6 +1480,13 @@ app.MapDelete(
         return Results.Ok(new { message = "Document permanently deleted.", fileCleanupCompleted = true });
     })
     .RequireAuthorization();
+
+// ============================================================
+// ANGULAR SPA FALLBACK
+// ============================================================
+// Client-side Angular routes should return index.html when no file or API
+// endpoint matches the requested path.
+app.MapFallbackToFile("index.html");
 
 // ============================================================
 // START API
