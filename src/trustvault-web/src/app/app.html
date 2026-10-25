@@ -1,0 +1,707 @@
+<div class="app-shell">
+
+  <!-- TOP NAVIGATION -->
+  <header class="topbar">
+    <a class="brand">
+      <span class="brand-mark">TV</span>
+      <span>TrustVault</span>
+    </a>
+    <span class="topbar-label">SECURE DOCUMENT WORKSPACE</span>
+  </header>
+
+  <!-- LOGIN / REGISTER -->
+  <main class="login-page" [hidden]="isLoggedIn">
+    <section class="hero-panel">
+      <span class="eyebrow">PRIVATE BY DESIGN</span>
+      <h1>Your files,<br /><span>under your control.</span></h1>
+      <p class="hero-copy">
+        One workspace to organize documents, manage access and keep track of important activity.
+      </p>
+
+      <div class="feature-list">
+        <div class="feature">
+          <span class="feature-icon">✓</span>
+          <div>
+            <strong>Controlled access</strong>
+            <p>Manage who can read or edit a document.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">⌁</span>
+          <div>
+            <strong>Activity history</strong>
+            <p>Build visibility into document activity.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">◇</span>
+          <div>
+            <strong>Organized workspace</strong>
+            <p>Keep your files easy to find.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-card">
+      @if (authView === 'login') {
+        <span class="card-label">{{ isRegisterMode ? 'CREATE YOUR ACCOUNT' : 'WELCOME BACK' }}</span>
+        <h2>{{ isRegisterMode ? 'Create your TrustVault account' : 'Sign in to TrustVault' }}</h2>
+        <p class="muted">{{ isRegisterMode ? 'Create an account to manage your documents.' : 'Sign in to access your secure workspace.' }}</p>
+
+        @if (loginError) {
+          <p class="login-error" role="alert">{{ loginError }}</p>
+        }
+        @if (resetMessage) {
+          <p class="upload-success" role="status">{{ resetMessage }}</p>
+        }
+
+        <form (ngSubmit)="openPreview()">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" [(ngModel)]="email" placeholder="you@example.com" autocomplete="username" maxlength="254" required />
+
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" [(ngModel)]="password" [placeholder]="isRegisterMode ? 'Create a password (8+ characters)' : 'Enter your password'" [attr.autocomplete]="isRegisterMode ? 'new-password' : 'current-password'" [attr.minlength]="isRegisterMode ? 8 : null" maxlength="128" required />
+
+          <button class="primary-button" type="submit" [disabled]="isSubmitting">
+            <span>{{ isSubmitting ? 'Please wait...' : isRegisterMode ? 'Create account' : 'Sign in securely' }}</span>
+            <span>→</span>
+          </button>
+        </form>
+
+        @if (!isRegisterMode) {
+          <button class="auth-mode-button" type="button" (click)="openForgotPassword()">Forgot password?</button>
+        }
+
+        <button class="auth-mode-button" type="button" [disabled]="isSubmitting" (click)="toggleAuthMode()">
+          {{ isRegisterMode ? 'Already have an account? Sign in' : 'New to TrustVault? Create an account' }}
+        </button>
+
+        <div class="prototype-note">
+          <strong>Local development mode:</strong> Your account credentials are checked by the TrustVault API.
+        </div>
+      }
+
+      @if (authView === 'forgot') {
+        <span class="card-label">ACCOUNT RECOVERY</span>
+        <h2>Forgot your password?</h2>
+        <p class="muted">Enter your registered email address. We will send a verification code if the account exists.</p>
+
+        @if (resetError) {
+          <p class="login-error" role="alert">{{ resetError }}</p>
+        }
+
+        <form (ngSubmit)="sendResetOtp()">
+          <label for="resetEmail">Email address</label>
+          <input id="resetEmail" name="resetEmail" type="email" [(ngModel)]="resetEmail" placeholder="you@example.com" maxlength="254" autocomplete="email" required />
+          <button class="primary-button" type="submit" [disabled]="isSendingOtp">
+            <span>{{ isSendingOtp ? 'Sending code...' : 'Send verification code' }}</span>
+            <span>→</span>
+          </button>
+        </form>
+
+        <button class="auth-mode-button" type="button" (click)="backToLogin()">← Back to sign in</button>
+      }
+
+      @if (authView === 'reset') {
+        <span class="card-label">VERIFY AND RESET</span>
+        <h2>Reset your password</h2>
+        <p class="muted">Enter the 6-digit code sent to {{ resetEmail }} and choose a new password.</p>
+
+        @if (resetMessage) {
+          <p class="upload-success" role="status">{{ resetMessage }}</p>
+        }
+        @if (resetError) {
+          <p class="login-error" role="alert">{{ resetError }}</p>
+        }
+
+        <form (ngSubmit)="resetPassword()">
+          <label for="resetOtp">6-digit verification code</label>
+          <input id="resetOtp" name="resetOtp" type="text" [(ngModel)]="resetOtp" placeholder="123456" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="one-time-code" required />
+
+          <label for="newPassword">New password</label>
+          <input id="newPassword" name="newPassword" type="password" [(ngModel)]="newPassword" placeholder="At least 8 characters" minlength="8" maxlength="128" autocomplete="new-password" required />
+
+          <label for="confirmNewPassword">Confirm new password</label>
+          <input id="confirmNewPassword" name="confirmNewPassword" type="password" [(ngModel)]="confirmNewPassword" placeholder="Re-enter new password" minlength="8" maxlength="128" autocomplete="new-password" required />
+
+          <button class="primary-button" type="submit" [disabled]="isResettingPassword">
+            <span>{{ isResettingPassword ? 'Resetting password...' : 'Reset password' }}</span>
+            <span>✓</span>
+          </button>
+        </form>
+
+        <button class="auth-mode-button" type="button" [disabled]="isSendingOtp" (click)="sendResetOtp()">Resend verification code</button>
+        <button class="auth-mode-button" type="button" (click)="backToLogin()">← Back to sign in</button>
+      }
+    </section>
+  </main>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard-shell" [hidden]="!isLoggedIn">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <span class="side-heading">WORKSPACE</span>
+
+      <button type="button" class="nav-item" [class.active]="activePage === 'dashboard'" (click)="goToDashboard()">▦ &nbsp; Overview</button>
+      <button type="button" class="nav-item" [class.active]="activePage === 'documents' && activeSection === 'documents'" (click)="selectSection('documents')">▤ &nbsp; Documents</button>
+      <button type="button" class="nav-item" [class.active]="activePage === 'documents' && activeSection === 'shared'" (click)="selectSection('shared')">▧ &nbsp; Shared Documents</button>
+      <button type="button" class="nav-item" [class.active]="activePage === 'documents' && activeSection === 'owner'" (click)="selectSection('owner')">♙ &nbsp; Owner Documents</button>
+      <button type="button" class="nav-item" [class.active]="activePage === 'recycle'" (click)="openRecycleBin()">♲ &nbsp; Recycle Bin <span class="nav-count">{{ recycleBinCount }}</span></button>
+
+      <span class="side-heading second-heading">SECURITY</span>
+      <button type="button" class="nav-item" [class.active]="activePage === 'permissions'" (click)="openPermissionsPage()">◇ &nbsp; Access permissions</button>
+      <button type="button" class="nav-item" [class.active]="activePage === 'audit'" (click)="openAuditPage()">◷ &nbsp; Audit activity</button>
+
+      <div class="sidebar-note">
+        <strong>Security first</strong>
+        <p>Review access and document activity.</p>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-main"
+      [class.page-bg-overview]="activePage === 'dashboard'"
+      [class.page-bg-documents]="activePage === 'documents' && activeSection === 'documents'"
+      [class.page-bg-shared]="activePage === 'documents' && activeSection === 'shared'"
+      [class.page-bg-owner]="activePage === 'documents' && activeSection === 'owner'">
+
+      <div class="dashboard-heading">
+        <div>
+          <span class="breadcrumb">
+            Workspace /
+            {{
+              activePage === 'dashboard' ? 'Overview' :
+              activePage === 'recycle' ? 'Recycle Bin' :
+              activePage === 'permissions' ? 'Access Permissions' :
+              activePage === 'audit' ? 'Audit Activity' :
+              activeSection === 'shared' ? 'Shared Documents' :
+              activeSection === 'owner' ? 'Owner Documents' : 'Documents'
+            }}
+          </span>
+
+          <h1>
+            {{
+              activePage === 'dashboard' ? 'Your workspace' :
+              activePage === 'recycle' ? 'Recycle Bin' :
+              activePage === 'permissions' ? 'Access Permissions' :
+              activePage === 'audit' ? 'Audit Activity' :
+              activeSection === 'shared' ? 'Shared Documents' :
+              activeSection === 'owner' ? 'Owner Documents' : 'Documents'
+            }}
+          </h1>
+
+          <p class="muted">
+            {{ activePage === 'dashboard' ? 'Manage and find your documents.' : 'View, search, preview, share and download your files.' }}
+          </p>
+
+          @if (activePage === 'documents') {
+            <button type="button" class="back-to-dashboard-button" (click)="goToDashboard()">← Back to Overview</button>
+          }
+        </div>
+
+        <div class="user-area">
+          <span class="avatar">{{ email.charAt(0).toUpperCase() }}</span>
+          <div class="user-details">
+            <span class="user-email">{{ email }}</span>
+            <small class="user-role">{{ userRole }}</small>
+          </div>
+          <button class="logout-button" type="button" (click)="logout()">Sign out</button>
+        </div>
+      </div>
+
+      <!-- OVERVIEW -->
+      @if (activePage === 'dashboard') {
+        <div class="demo-banner">
+          <strong>Connected workspace</strong>
+          <span>Document records are loaded from the TrustVault API.</span>
+        </div>
+
+        <section class="stat-grid">
+          <button type="button" class="stat-card stat-card-button" [class.selected-stat]="activeSection === 'documents'" (click)="selectSection('documents')">
+            <span class="stat-label">Documents</span>
+            <strong>{{ totalDocumentsCount }}</strong>
+            <span class="stat-caption">Documents available to your account</span>
+            <span class="stat-action">View documents →</span>
+          </button>
+
+          <button type="button" class="stat-card stat-card-button" [class.selected-stat]="activeSection === 'shared'" (click)="selectSection('shared')">
+            <span class="stat-label">Shared documents</span>
+            <strong>{{ sharedDocumentsCount }}</strong>
+            <span class="stat-caption">Documents shared with your account</span>
+            <span class="stat-action">View shared files →</span>
+          </button>
+
+          <button type="button" class="stat-card stat-card-button" [class.selected-stat]="activeSection === 'owner'" (click)="selectSection('owner')">
+            <span class="stat-label">Owner documents</span>
+            <strong>{{ ownedDocumentsCount }}</strong>
+            <span class="stat-caption">Documents owned by your account</span>
+            <span class="stat-action">View owner files →</span>
+          </button>
+        </section>
+      }
+
+      <!-- DOCUMENTS -->
+      @if (activePage === 'documents') {
+        <section class="documents-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>{{ activeSection === 'shared' ? 'Shared documents' : activeSection === 'owner' ? 'Owner documents' : 'My documents' }}</h2>
+              <p class="muted">{{ activeSection === 'shared' ? 'Browse documents shared with your account.' : activeSection === 'owner' ? 'Browse documents owned by your account.' : 'Upload, search, view, share and download your files.' }}</p>
+            </div>
+
+            <input class="search-input" type="search" name="searchTerm" [(ngModel)]="searchTerm" placeholder="Search documents..." aria-label="Search documents" />
+          </div>
+
+          <!-- UPLOAD -->
+          <section class="upload-section" [hidden]="userRole !== 'Owner' && userRole !== 'Admin'">
+            <div class="upload-heading">
+              <div class="upload-icon">↑</div>
+              <div>
+                <h3>Upload a document</h3>
+                <p>PDF, Word, Excel or TXT files. Maximum size: 10 MB.</p>
+              </div>
+            </div>
+
+            <label for="documentFile" class="upload-label">Select a file from your computer</label>
+            <input id="documentFile" class="file-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" (change)="onFileSelected($event)" />
+
+            @if (selectedFile) {
+              <div class="selected-file">
+                <span class="selected-file-icon">▤</span>
+                <div class="selected-file-info">
+                  <strong>{{ selectedFile.name }}</strong>
+                  <small>{{ formatFileSize(selectedFile.size) }}</small>
+                </div>
+              </div>
+            }
+
+            <button class="primary-button upload-button" type="button" [disabled]="!selectedFile || isUploading" (click)="uploadDocument()">
+              <span>{{ isUploading ? 'Uploading document...' : 'Upload document' }}</span><span>↑</span>
+            </button>
+
+            @if (uploadMessage) {
+              <p class="upload-success" role="status">✓ &nbsp; {{ uploadMessage }}</p>
+            }
+            @if (uploadError) {
+              <p class="login-error" role="alert">{{ uploadError }}</p>
+            }
+          </section>
+
+          @if (isLoadingDocuments) {
+            <p class="loading-message">Loading documents...</p>
+          }
+          @if (documentError) {
+            <p class="login-error" role="alert">{{ documentError }}</p>
+          }
+          @if (documentMessage) {
+            <p class="upload-success" role="status">{{ documentMessage }}</p>
+          }
+
+          <!-- DOCUMENT TABLE -->
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>DOCUMENT</th>
+                  <th>OWNER</th>
+                  <th>LAST UPDATED</th>
+                  <th>ACCESS</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (doc of filteredDocuments; track doc.id) {
+                  <tr>
+                    <td>
+                      <div class="document-name">
+                        <button type="button" class="document-icon-button" [attr.aria-label]="'View details for ' + doc.name" (click)="openDocumentDetails(doc)">
+                          <span class="file-badge" [ngClass]="doc.type.toLowerCase()">{{ doc.type }}</span>
+                        </button>
+                        <div class="document-name-text">
+                          <button type="button" class="document-title-button" (click)="openDocumentDetails(doc)">{{ doc.name }}</button>
+                          <small>{{ doc.size }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ doc.owner }}</td>
+                    <td>{{ doc.updated }}</td>
+                    <td><span class="access-badge" [class.shared]="doc.access === 'Shared'">{{ doc.access }}</span></td>
+                    <td>
+                      <div class="document-actions">
+                        <button class="view-document-button" type="button" (click)="openDocumentDetails(doc)" title="View document details">◉ View</button>
+
+                        @if (isDocumentOwner(doc)) {
+                          <button class="share-document-button" type="button" (click)="openShareDialog(doc)" title="Share document">↗ Share</button>
+                        }
+
+                        <button class="download-button" type="button" (click)="downloadDocument(doc)">↓ Download</button>
+
+                        @if (isDocumentOwner(doc)) {
+                          <button class="revoke-share-button" type="button" (click)="deleteDocument(doc)">Move to Recycle Bin</button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="empty-message">
+                      @if (isLoadingDocuments) {
+                        Loading documents...
+                      } @else if (searchTerm.trim()) {
+                        No documents match your search.
+                      } @else if (activeSection === 'shared') {
+                        No shared documents are available for this account.
+                      } @else if (activeSection === 'owner') {
+                        No owner documents found for this account.
+                      } @else {
+                        No documents found. Upload your first file.
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      <!-- RECYCLE BIN -->
+      @if (activePage === 'recycle') {
+        <section class="documents-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Recycle Bin</h2>
+              <p class="muted">Restore deleted documents or permanently remove them.</p>
+            </div>
+            <button type="button" class="view-document-button" (click)="loadTrash()" [disabled]="isLoadingTrash">Refresh</button>
+          </div>
+
+          @if (trashMessage) {
+            <p class="upload-success" role="status">{{ trashMessage }}</p>
+          }
+          @if (trashError) {
+            <p class="login-error" role="alert">{{ trashError }}</p>
+          }
+          @if (isLoadingTrash) {
+            <p class="loading-message">Loading Recycle Bin...</p>
+          }
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>DOCUMENT</th><th>DELETED</th><th>SIZE</th><th>ACTIONS</th></tr></thead>
+              <tbody>
+                @for (doc of filteredTrashDocuments; track doc.id) {
+                  <tr>
+                    <td>
+                      <div class="document-name">
+                        <span class="file-badge" [ngClass]="doc.type.toLowerCase()">{{ doc.type }}</span>
+                        <div class="document-name-text"><strong>{{ doc.name }}</strong><small>{{ doc.owner }}</small></div>
+                      </div>
+                    </td>
+                    <td>{{ formatDateTime(doc.deletedAtUtc || doc.updatedAtUtc) }}</td>
+                    <td>{{ doc.size }}</td>
+                    <td>
+                      <div class="document-actions">
+                        <button type="button" class="view-document-button" [disabled]="restoringDocumentId === doc.id" (click)="restoreDocument(doc)">{{ restoringDocumentId === doc.id ? 'Restoring...' : 'Restore' }}</button>
+                        <button type="button" class="revoke-share-button" [disabled]="permanentlyDeletingDocumentId === doc.id" (click)="permanentDeleteDocument(doc)">{{ permanentlyDeletingDocumentId === doc.id ? 'Deleting...' : 'Delete forever' }}</button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="4" class="empty-message">{{ isLoadingTrash ? 'Loading...' : 'The Recycle Bin is empty.' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      <!-- ACCESS PERMISSIONS -->
+      @if (activePage === 'permissions') {
+        <section class="documents-panel">
+          <div class="panel-heading">
+            <div><h2>Access permissions</h2><p class="muted">Review who can access your documents.</p></div>
+            <button type="button" class="view-document-button" (click)="loadPermissions()" [disabled]="isLoadingPermissions">Refresh</button>
+          </div>
+
+          @if (permissionMessage) {
+            <p class="upload-success" role="status">{{ permissionMessage }}</p>
+          }
+          @if (permissionsError) {
+            <p class="login-error" role="alert">{{ permissionsError }}</p>
+          }
+          @if (isLoadingPermissions) {
+            <p class="loading-message">Loading permissions...</p>
+          }
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>DOCUMENT</th><th>RECIPIENT</th><th>PERMISSION</th><th>GRANTED</th><th>STATUS / ACTION</th></tr></thead>
+              <tbody>
+                @for (permission of permissions; track permission.id) {
+                  <tr>
+                    <td>{{ permission.documentName }}</td>
+                    <td>{{ permission.recipientEmail }}</td>
+                    <td>{{ permission.permission }}</td>
+                    <td>{{ formatDateTime(permission.grantedAtUtc) }}</td>
+                    <td>
+                      <span class="access-badge" [class.shared]="permission.status === 'Active'">{{ permission.status }}</span>
+                      @if (permission.canRevoke && permission.status === 'Active') {
+                        <button type="button" class="revoke-share-button" (click)="revokePermission(permission)">Revoke</button>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="empty-message">{{ isLoadingPermissions ? 'Loading...' : 'No permissions found.' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      <!-- AUDIT ACTIVITY -->
+      @if (activePage === 'audit') {
+        <section class="documents-panel">
+          <div class="panel-heading">
+            <div><h2>Audit activity</h2><p class="muted">Recent authentication, sharing and document events.</p></div>
+            <button type="button" class="view-document-button" (click)="loadAudit()" [disabled]="isLoadingAudit">Refresh</button>
+          </div>
+
+          @if (auditError) {
+            <p class="login-error" role="alert">{{ auditError }}</p>
+          }
+          @if (isLoadingAudit) {
+            <p class="loading-message">Loading audit activity...</p>
+          }
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>TIME</th><th>ACTION</th><th>OUTCOME</th><th>ACTOR</th><th>DETAILS</th></tr></thead>
+              <tbody>
+                @for (event of auditEvents; track event.id) {
+                  <tr>
+                    <td>{{ formatDateTime(event.createdAtUtc) }}</td>
+                    <td>{{ event.action }}</td>
+                    <td>{{ event.outcome }}</td>
+                    <td>{{ event.actorEmail || '—' }}</td>
+                    <td>{{ event.details || event.documentName || '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="empty-message">{{ isLoadingAudit ? 'Loading...' : 'No audit events found.' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      <p class="dashboard-footnote">TrustVault • Local development workspace</p>
+    </main>
+  </div>
+
+  <!-- DOCUMENT DETAILS: RIGHT-SIDE PANEL -->
+  @if (showDocumentDetails && selectedDocument) {
+    <div class="side-panel-backdrop" (click)="closeDocumentDetails()">
+      <section class="document-side-panel" role="dialog" aria-modal="true" aria-labelledby="document-modal-title" (click)="$event.stopPropagation()">
+
+        <header class="side-panel-header">
+          <div>
+            <span class="modal-eyebrow">SECURE DOCUMENT WORKSPACE</span>
+            <h2 id="document-modal-title">Document details</h2>
+            <p class="side-panel-subtitle">View file information and preview.</p>
+          </div>
+          <button type="button" class="modal-close-button" (click)="closeDocumentDetails()" aria-label="Close details">✕</button>
+        </header>
+
+        <div class="side-panel-content">
+          <div class="side-panel-file-card">
+            <span class="file-badge" [ngClass]="selectedDocument.type.toLowerCase()">{{ selectedDocument.type }}</span>
+            <div class="side-panel-file-title">
+              <strong>{{ getDocumentName(selectedDocument) }}</strong>
+              <span>{{ selectedDocument.size }}</span>
+            </div>
+          </div>
+
+          <section class="side-panel-section">
+            <h3>File information</h3>
+            <div class="side-panel-info-row"><span>File name</span><strong>{{ getDocumentName(selectedDocument) }}</strong></div>
+            <div class="side-panel-info-row"><span>File ID</span><strong>{{ selectedDocument.id }}</strong></div>
+            <div class="side-panel-info-row"><span>Owner</span><strong>{{ getDocumentOwner(selectedDocument) }}</strong></div>
+            <div class="side-panel-info-row"><span>Last updated</span><strong>{{ getDocumentDate(selectedDocument) }}</strong></div>
+            <div class="side-panel-info-row"><span>Access</span><strong>{{ getDocumentAccess(selectedDocument) }}</strong></div>
+            <div class="side-panel-info-row"><span>File type</span><strong>{{ selectedDocument.type }}</strong></div>
+            <div class="side-panel-info-row"><span>File size</span><strong>{{ selectedDocument.size }}</strong></div>
+          </section>
+
+          <section class="side-panel-section preview-section">
+            <div class="preview-heading">
+              <h3>Document preview</h3>
+              <p class="muted">PDF and TXT files can be previewed here.</p>
+            </div>
+
+            @if (previewLoading) {
+              <div class="preview-status" role="status"><span class="preview-spinner"></span>Loading document preview...</div>
+            }
+
+            @if (previewError) {
+              <div class="preview-error" role="status">
+                <strong>Preview unavailable</strong>
+                <p>{{ previewError }}</p>
+              </div>
+            }
+
+            @if (previewUrl) {
+              <iframe class="document-preview" [src]="previewUrl" [attr.title]="'Preview of ' + getDocumentName(selectedDocument)"></iframe>
+            }
+
+            @if (!previewLoading && !previewError && !previewUrl) {
+              <div class="preview-placeholder">
+                <span class="preview-placeholder-icon">▤</span>
+                <strong>Preview not available</strong>
+                <p>Download the file to view it on your device.</p>
+              </div>
+            }
+          </section>
+        </div>
+
+        <footer class="side-panel-actions">
+          <button type="button" class="modal-close-action" (click)="closeDocumentDetails()">Close</button>
+          <button type="button" class="modal-download-action" (click)="downloadDocument(selectedDocument)">↓ Download document</button>
+        </footer>
+      </section>
+    </div>
+  }
+
+  <!-- SHARE DOCUMENT: RIGHT-SIDE SLIDING PANEL -->
+  @if (showShareDialog && shareTargetDocument) {
+    <div class="side-panel-backdrop share-panel-backdrop" (click)="closeShareDialog()">
+      <section class="document-side-panel share-side-panel" role="dialog" aria-modal="true" aria-labelledby="share-modal-title" (click)="$event.stopPropagation()">
+
+        <header class="side-panel-header share-side-panel-header">
+          <div>
+            <span class="modal-eyebrow">DOCUMENT PERMISSIONS</span>
+            <h2 id="share-modal-title">Share document</h2>
+            <p class="side-panel-subtitle">Manage who can access this file.</p>
+          </div>
+          <button type="button" class="modal-close-button" (click)="closeShareDialog()" aria-label="Close sharing panel">✕</button>
+        </header>
+
+        <div class="share-panel-content">
+          <div class="share-file-card">
+            <div class="share-file-icon">▤</div>
+            <div class="share-file-details">
+              <strong>{{ shareTargetDocument.name }}</strong>
+              <span>{{ shareTargetDocument.type }} · {{ shareTargetDocument.size }}</span>
+              <span class="share-current-access">{{ shareTargetDocument.access }} access</span>
+            </div>
+          </div>
+
+          <section class="share-panel-section">
+            <h3><span class="share-section-number">1</span> Share with someone</h3>
+            <p class="share-help-text">Enter the email address of an existing TrustVault user. The recipient must have a registered account.</p>
+
+            <label class="share-field-label" for="shareEmail">Recipient email</label>
+            <input
+              id="shareEmail"
+              name="shareEmail"
+              class="share-input"
+              type="email"
+              [(ngModel)]="shareEmail"
+              placeholder="friend@example.com"
+              maxlength="254"
+              autocomplete="off"
+              required
+            />
+
+            <label class="share-field-label" for="sharePermission">Permission level</label>
+            <select id="sharePermission" name="sharePermission" class="share-input" [(ngModel)]="sharePermission">
+              <option value="Read">Read — view and download</option>
+              <option value="Edit">Edit — permission for supported editing features</option>
+            </select>
+
+            <div class="share-permission-info">
+              <span class="share-info-icon">ⓘ</span>
+              <p>Only share with people you trust. Edit permission does not itself add document-editing functionality.</p>
+            </div>
+
+            <button
+              class="primary-button share-submit-button"
+              type="button"
+              [disabled]="isSharing || !shareEmail.trim()"
+              (click)="shareDocumentWithUser()"
+            >
+              <span>{{ isSharing ? 'Sharing document...' : 'Share document' }}</span>
+              <span>↗</span>
+            </button>
+
+            @if (shareMessage) {
+              <p class="share-success" role="status">✓ {{ shareMessage }}</p>
+            }
+            @if (shareError) {
+              <p class="login-error" role="alert">{{ shareError }}</p>
+            }
+          </section>
+
+          <section class="share-panel-section existing-shares-section">
+            <div class="existing-shares-heading">
+              <div>
+                <h3><span class="share-section-number">2</span> People with access</h3>
+                <p class="muted">Review and revoke existing access.</p>
+              </div>
+              <span class="share-count">{{ existingShares.length }}</span>
+            </div>
+
+            @if (isLoadingShares) {
+              <div class="share-loading-state">
+                <span class="preview-spinner"></span>
+                <p>Loading sharing information...</p>
+              </div>
+            } @else if (existingShares.length > 0) {
+              <div class="share-list">
+                @for (share of existingShares; track share.id) {
+                  <div class="share-list-item">
+                    <div class="share-person-avatar">{{ share.recipientEmail.charAt(0).toUpperCase() }}</div>
+                    <div class="share-user-info">
+                      <strong>{{ share.recipientEmail }}</strong>
+                      <span class="permission-badge" [class.edit-permission]="share.permission === 'Edit'">
+                        {{ share.permission === 'Edit' ? '✎ Edit access' : '◉ Read access' }}
+                      </span>
+                      <small>Granted: {{ share.grantedAtUtc | date:'mediumDate' }}</small>
+                    </div>
+                    <button
+                      type="button"
+                      class="revoke-share-button share-revoke-button"
+                      (click)="revokeShare(share)"
+                      [attr.aria-label]="'Revoke access for ' + share.recipientEmail"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-shares-state">
+                <span class="empty-shares-icon">♙</span>
+                <strong>No one has access yet</strong>
+                <p>People you share this document with will appear here.</p>
+              </div>
+            }
+          </section>
+
+          <div class="share-security-note">
+            <span>◇</span>
+            <p><strong>Your document, your control.</strong><br />You can revoke a recipient's access whenever it is no longer needed.</p>
+          </div>
+        </div>
+
+        <footer class="side-panel-actions share-panel-footer">
+          <button type="button" class="modal-close-action" (click)="closeShareDialog()">Close panel</button>
+        </footer>
+      </section>
+    </div>
+  }
+
+</div>

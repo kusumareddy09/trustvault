@@ -1,0 +1,33 @@
+# .NET build files
+**/bin/
+**/obj/
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-*
+
+# Uploaded private documents
+**/PrivateDocuments/
+
+# Node and Angular
+**/node_modules/
+**/.angular/
+**/dist/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+**/secrets.json
+**/*.pfx
+**/*.pem
+**/*.key
+
+# IDE files
+.vs/
+*.user
+*.suo

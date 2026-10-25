@@ -1,0 +1,327 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustVault | Secure Document Storage</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --navy: #10213b;
+      --blue: #315efb;
+      --light: #f4f7fc;
+      --muted: #69778d;
+      --border: #e4eaf3;
+    }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--light);
+      color: var(--navy);
+      min-height: 100vh;
+    }
+
+    header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 18px 7%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 750;
+    }
+
+    .brand-icon {
+      background: var(--blue);
+      color: white;
+      padding: 9px 12px;
+      border-radius: 12px;
+    }
+
+    nav {
+      display: flex;
+      gap: 22px;
+      align-items: center;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      background: var(--blue);
+      color: white;
+      cursor: pointer;
+      font-weight: 650;
+      font-size: 14px;
+    }
+
+    .button:hover {
+      background: #2349d5;
+    }
+
+    main {
+      max-width: 1120px;
+      padding: 56px 24px;
+      margin: auto;
+    }
+
+    .welcome {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 35px;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 44px);
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+
+    .description {
+      color: var(--muted);
+      max-width: 570px;
+      line-height: 1.7;
+    }
+
+    .secure-note {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 17px;
+      border-radius: 14px;
+      min-width: 190px;
+      line-height: 1.6;
+    }
+
+    .secure-note strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .secure-note span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .section-title {
+      font-size: 20px;
+      margin-bottom: 18px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 35px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      padding: 23px;
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      background: #edf1ff;
+      border-radius: 12px;
+      font-size: 22px;
+      margin-bottom: 17px;
+    }
+
+    .card h3 {
+      font-size: 17px;
+      margin-bottom: 9px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    .text-link {
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .bottom-panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      padding: 24px;
+    }
+
+    .bottom-panel p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 20px;
+    }
+
+    @media (max-width: 700px) {
+      header {
+        padding: 16px 5%;
+      }
+
+      nav a {
+        display: none;
+      }
+
+      main {
+        padding: 36px 18px;
+      }
+
+      .welcome {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .secure-note {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="brand-icon">T</span>
+      <span>TrustVault</span>
+    </div>
+
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="#security">Security</a>
+      <button class="button" onclick="showMessage()">
+        Get Started
+      </button>
+    </nav>
+  </header>
+
+  <main id="home">
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">Your personal document vault</p>
+        <h1>Your documents.<br>Safe and organized.</h1>
+        <p class="description">
+          Welcome to TrustVault — a central place to manage your
+          documents, control access, and keep track of your files.
+        </p>
+      </div>
+
+      <div class="secure-note">
+        <strong>🛡️ Privacy matters</strong>
+        <span>Designed for secure document management</span>
+      </div>
+    </section>
+
+    <section id="features">
+      <h2 class="section-title">Explore TrustVault</h2>
+
+      <div class="cards">
+        <article class="card">
+          <div class="card-icon">📁</div>
+          <h3>My Documents</h3>
+          <p>Manage your documents in one convenient place.</p>
+          <button class="text-link" onclick="showMessage()">
+            Open Documents →
+          </button>
+        </article>
+
+        <article class="card">
+          <div class="card-icon">🔐</div>
+          <h3>Access Control</h3>
+          <p>Manage who can access documents you choose to share.</p>
+          <button class="text-link" onclick="showMessage()">
+            Manage Access →
+          </button>
+        </article>
+
+        <article class="card">
+          <div class="card-icon">📋</div>
+          <h3>Activity History</h3>
+          <p>Review available activity and audit information.</p>
+          <button class="text-link" onclick="showMessage()">
+            View Activity →
+          </button>
+        </article>
+      </div>
+    </section>
+
+    <section class="bottom-panel" id="security">
+      <h2>Security starts with control.</h2>
+      <p>
+        TrustVault brings document management and access permissions
+        together. Sign-in, file access, and permissions will be connected
+        to your TrustVault API in the next development step.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 TrustVault · Document management made simple
+  </footer>
+
+  <script>
+    function showMessage() {
+      alert(
+        "TrustVault frontend is ready! Login and document features " +
+        "will be connected to the backend in the next step."
+      );
+    }
+  </script>
+</body>
+</html>
