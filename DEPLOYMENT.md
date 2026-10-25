@@ -22,7 +22,7 @@ Deploy one Railway service from the GitHub repository. The API Docker image buil
 
 SQLite and uploaded files share the `/data` volume and persist across restarts. The container fixes volume ownership before running the API as its unprivileged app user. Back up the volume. This setup is intended for one API instance; horizontal scaling requires a shared database and object storage.
 
-Development demo accounts are not seeded in Production. Production account creation is restricted to a single first owner; after that account is created, registration closes. Do not reuse demo credentials.
+Development demo accounts are not seeded in Production. Visitors can create separate accounts; each account owns only its own documents, and document sharing requires an explicit grant. Do not reuse demo credentials.
 
 ## Render
 
@@ -31,7 +31,7 @@ Deploy this as one Docker **Web Service** so the API and Angular frontend share 
 1. Create a Web Service from the repository, leave the root directory at the repository root, and set the Dockerfile path to `src/TrustVault.Api/Dockerfile`.
 2. Add a persistent disk mounted at `/data`.
 3. Set `ASPNETCORE_ENVIRONMENT=Production`, `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, `ConnectionStrings__TrustVault=Data Source=/data/trustvault.db`, `Storage__DocumentsPath=/data/PrivateDocuments`, and a unique `Jwt__Key` with at least 32 bytes of entropy. Configure SMTP variables only if password-reset email is needed.
-4. To provision the owner without opening the site first, set `Bootstrap__OwnerEmail` and `Bootstrap__OwnerPassword` in Render's secret environment-variable settings. The API creates that Owner only if the email is not already in the database; it never resets an existing account's password. Alternatively, when no owner exists and those variables are unset, use **Create an account** on the live page to register the first Owner. Production registration closes automatically as soon as the first account exists.
-5. Wait for the service to become healthy and sign in. If bootstrap variables were used, remove both from Render after the first successful sign-in and redeploy. Keep the disk attached; it stores accounts and private uploads. The service uses Render's `PORT` setting.
+4. Optionally provision a specific owner by setting `Bootstrap__OwnerEmail` and `Bootstrap__OwnerPassword` in Render's secret environment-variable settings. This creates that account only when its email is not already present and does not reset existing passwords. Otherwise, visitors can use **Create an account** on the live page; each receives an isolated Owner account.
+5. Wait for the service to become healthy and create an account or sign in. If bootstrap variables were used, remove both from Render after the first successful sign-in and redeploy. Keep the disk attached; it stores accounts and private uploads. The service uses Render's `PORT` setting.
 
-Bootstrap settings do not change or reset any existing password. If account creation reports setup is already complete, the persistent database already contains a user; sign in with that account or provision a specific owner using the bootstrap variables. Do not delete the database to retry.
+Bootstrap settings do not change or reset any existing password. If sign-in returns 401, create an account with the **Create an account** link or use password reset for an existing account. Do not delete the database to retry.
