@@ -1,0 +1,17 @@
+.git/
+.github/
+**/bin/
+**/obj/
+**/node_modules/
+**/.angular/
+**/dist/
+**/PrivateDocuments/
+**/*.db*
+**/*.sqlite*
+**/.env
+**/.env.*
+**/secrets.json
+**/appsettings.Development.json
+tests/
+Program.cs
+package-lock.json

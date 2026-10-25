@@ -16,15 +16,18 @@ public sealed class RecycleBinCleanupService : BackgroundService
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IWebHostEnvironment _environment;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<RecycleBinCleanupService> _logger;
 
     public RecycleBinCleanupService(
         IServiceScopeFactory scopeFactory,
         IWebHostEnvironment environment,
+        IConfiguration configuration,
         ILogger<RecycleBinCleanupService> logger)
     {
         _scopeFactory = scopeFactory;
         _environment = environment;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -98,10 +101,9 @@ public sealed class RecycleBinCleanupService : BackgroundService
                 continue;
             }
 
-            var storageDirectory = Path.GetFullPath(
-                Path.Combine(
-                    _environment.ContentRootPath,
-                    "PrivateDocuments"));
+            var storageDirectory = PrivateDocumentStorage.GetDirectory(
+                _environment,
+                _configuration);
 
             var filePath = Path.GetFullPath(
                 Path.Combine(

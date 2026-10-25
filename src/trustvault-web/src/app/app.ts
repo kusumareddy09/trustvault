@@ -110,7 +110,8 @@ export class App implements OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly sanitizer = inject(DomSanitizer);
 
-  private readonly apiUrl = 'http://localhost:5099';
+  private readonly apiUrl =
+    window.location.hostname === 'localhost' ? 'http://localhost:5099' : '';
 
   private fileInput: HTMLInputElement | null = null;
   private previewObjectUrl: string | null = null;

@@ -206,6 +206,12 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
+if (app.Environment.IsProduction())
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
+
 // ============================================================
 // HEALTH
 // ============================================================
@@ -507,6 +513,7 @@ app.MapPost("/api/documents",
            ClaimsPrincipal principal,
            AppDbContext db,
            IWebHostEnvironment environment,
+           IConfiguration configuration,
            CancellationToken cancellationToken) =>
 {
     var userId = principal.FindFirst(
@@ -578,8 +585,8 @@ app.MapPost("/api/documents",
         _ => "application/octet-stream"
     };
 
-    var storageDirectory = Path.Combine(
-        environment.ContentRootPath, "PrivateDocuments");
+    var storageDirectory = PrivateDocumentStorage.GetDirectory(
+        environment, configuration);
 
     Directory.CreateDirectory(storageDirectory);
 
@@ -656,6 +663,7 @@ app.MapGet("/api/documents/{id}/download",
            ClaimsPrincipal principal,
            AppDbContext db,
            IWebHostEnvironment environment,
+           IConfiguration configuration,
            HttpContext context,
            CancellationToken cancellationToken) =>
 {
@@ -697,8 +705,8 @@ app.MapGet("/api/documents/{id}/download",
         return Results.NotFound();
     }
 
-    var storageDirectory = Path.GetFullPath(
-        Path.Combine(environment.ContentRootPath, "PrivateDocuments"));
+    var storageDirectory = PrivateDocumentStorage.GetDirectory(
+        environment, configuration);
 
     var filePath = Path.GetFullPath(
         Path.Combine(storageDirectory, document.StorageKey));
@@ -1220,6 +1228,7 @@ app.MapDelete("/api/documents/{id}/permanent",
            ClaimsPrincipal principal,
            AppDbContext db,
            IWebHostEnvironment environment,
+           IConfiguration configuration,
            HttpContext context,
            CancellationToken cancellationToken) =>
 {
@@ -1257,8 +1266,8 @@ app.MapDelete("/api/documents/{id}/permanent",
             statusCode: StatusCodes.Status500InternalServerError);
     }
 
-    var storageDirectory = Path.GetFullPath(
-        Path.Combine(environment.ContentRootPath, "PrivateDocuments"));
+    var storageDirectory = PrivateDocumentStorage.GetDirectory(
+        environment, configuration);
 
     var filePath = Path.GetFullPath(
         Path.Combine(storageDirectory, document.StorageKey));
@@ -1347,6 +1356,23 @@ app.MapDelete("/api/documents/{id}/permanent",
     });
 })
 .RequireAuthorization();
+
+if (app.Environment.IsProduction())
+{
+    app.MapFallback("/{*path:nonfile}",
+        (HttpContext context, IWebHostEnvironment environment) =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api") ||
+                context.Request.Path.StartsWithSegments("/health"))
+            {
+                return Results.NotFound();
+            }
+
+            return Results.File(
+                Path.Combine(environment.WebRootPath, "index.html"),
+                "text/html");
+        });
+}
 
 // ============================================================
 // START API
